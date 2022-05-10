@@ -3,14 +3,14 @@
 
 
 ## Contributors: 
-> + 최성찬 (201824641)
->  + Contact info
+> ### 최성찬 (201824641)
+> **Contact info**
 >    + 010-xxxx-xxxx
-
-> + Odgerel Ariunbold (201824623)
->  + Contact info
+---
+> ### Odgerel Ariunbold (201824623)
+> **Contact info**
 >    + 010-xxxx-xxxx
-
-> + Ganchuluun Narantsatsralt (201824621)
->   + Contact info
+---
+> ### Ganchuluun Narantsatsralt (201824621)
+> **Contact info**
 >     + 010-7591-0810
