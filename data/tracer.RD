@@ -1,3 +1,6 @@
+Use parameter with name of the gz file to process without adding its extension .gz to the name.
+ex. ssdtrace-00.gz -> ./tracer ssdtrace-00
+
 Extracting field [Timestamp] [Trace Action] [Operation Type]
 [SectorNumber] [I/O Size] from format like below
 259,2    7   141911   203.947413674  3276  Q  WS 499472400 + 8 [jbd2/nvme0n1-8]
