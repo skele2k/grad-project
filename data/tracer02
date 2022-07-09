@@ -1,0 +1,18 @@
+#!/bin/bash
+COUNT=0
+if [ $# -eq 0 ]
+then
+	echo "Input gzfile name without .gz as parameter"
+else
+	for word in `zcat $1.gz | grep -w "D[A-Z]*" | grep -w "W[A-Z]*"`
+	do
+		(( COUNT = $COUNT + 1 ))
+		case $COUNT in
+		4) echo -n "$word ";;
+		8) echo -n "$word ";;
+		10) echo $word;;
+		11) COUNT=0;;
+		esac
+	done > $1
+fi
+
