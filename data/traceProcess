@@ -1,0 +1,29 @@
+#!/bin/bash
+COUNT=0
+OUTFILE="ssdtrace"
+if [ -e $OUTFILE ]
+then
+	rm $OUTFILE
+fi
+for ((i=0; i<27; ++i))
+do
+	COUNT=0
+	FILENAME="ssdtrace-"
+	if [ $i -lt 10 ]
+	then
+		FILENAME=$FILENAME"0$i"
+	else
+		FILENAME=$FILENAME"$i"
+	fi
+	for word in `zcat $FILENAME.gz | grep -w "D[A-Z]*" | grep -w "W[A-Z]*"`
+	do
+		(( COUNT = $COUNT + 1 ))
+		case $COUNT in
+		4) echo -n "$word ";;
+		8) echo -n "$word ";;
+		10) echo $word;;
+		11) COUNT=0;;
+		esac
+	done >> $OUTFILE
+	echo "$FILENAME processing done"
+done
