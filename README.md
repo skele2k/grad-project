@@ -13,6 +13,10 @@
 > **Contact info - 010-7591-0810**
 
 ```data``` folder contains the data to train and currently it is only the sample file.   
+```data/traceProcess``` is a script to process whole data from ssdtrace-00 to ssdtrace-26 at once
+```data/ssdtrace.gz``` is a gz file which is output of above traceProcess script. This will be used for training model.
+```data/labeling``` folder contains the labeled data and codes to lable the datas.
+```data/labeling/Sector.cpp``` is a code to calculate frequency, access interval, and overall i/o size.
 
 ```src/``` only source codes must be included in the subfolder of ```src```
 
