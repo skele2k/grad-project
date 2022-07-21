@@ -1,0 +1,22 @@
+#!/bin/bash
+COUNT=0
+LBA=""
+SIZE=""
+OUTFILE="ssdtrace"
+IFS=$'\n',
+if [ -e $OUTFILE ]
+then
+	rm $OUTFILE
+fi
+FILENAME="$1"
+for word in `bzcat $FILENAME | grep -w "w[a-z]*"`
+do
+	(( COUNT = $COUNT + 1 ))
+	case $COUNT in
+	2) LBA=$word;;
+	3) (( SIZE = $word / 512 ));;
+	5) echo "$word $LBA $SIZE"
+		COUNT=0;;
+	esac
+done >> $OUTFILE
+echo "$FILENAME processing done"
