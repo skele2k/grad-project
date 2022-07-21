@@ -5,7 +5,7 @@ import os
 TRAINDATAMAX = 1586700
 TRAINDATAINTER = 100000
 TRAINDATAYMAX = 1000
-TRAINDATAYINTER = 100
+TRAINDATAYINTER = 50
 
 TESTDATAMAX = 700873
 TESTDATAINTER = 50000
@@ -32,10 +32,10 @@ os.chdir(curr)
 print("Data preparation for plot done")
 plot.figure(figsize=(14,7))
 
-#plot.yticks(np.arange(0, TRAINDATAYMAX, TRAINDATAYINTER))
-#plot.xticks(np.arange(0, TRAINDATAMAX, TRAINDATAINTER))
-plot.yticks(np.arange(0, TESTDATAYMAX, TESTDATAYINTER))
-plot.xticks(np.arange(0, TESTDATAMAX, TESTDATAINTER))
+plot.yticks(np.arange(0, TRAINDATAYMAX, TRAINDATAYINTER))
+plot.xticks(np.arange(0, TRAINDATAMAX, TRAINDATAINTER))
+#plot.yticks(np.arange(0, TESTDATAYMAX, TESTDATAYINTER))
+#plot.xticks(np.arange(0, TESTDATAMAX, TESTDATAINTER))
 
 plot.plot(X, Y)
 plot.gca().invert_yaxis()
