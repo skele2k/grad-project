@@ -118,7 +118,7 @@ void Sector::Calc(const Sector& other) {
 }
 
 std::ostream& operator << (std::ostream& stream, const Sector& sector) {
-	stream << sector.sector_id_ << " " << sector.frequency_ <<
-		" " << sector.avg_ << " " << sector.size_;
+	stream << sector.sector_id_ << "," << sector.frequency_ <<
+		"," << sector.avg_ << "," << sector.size_;
 	return stream;
 }
