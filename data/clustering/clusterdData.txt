@@ -1,0 +1,3 @@
+DataClustered file used Frequency, Time Interval Avg, and Time Standard Derivation
+
+DataClusteredSize file used Frequency, Time Interval Avg, Time Standard Derivation, and # of blocks

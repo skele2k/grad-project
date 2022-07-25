@@ -1,0 +1,30 @@
+Enter the file name of training data: testDataClusteredSize.csv
+Cluster 0 
+Frequency Avg : 5.939771802683116 
+Time Interval Avg : 5380.521369400942
+Std Deriv Avg : 16522.528467432996
+block # Avg : 45.494957331264544
+Number of datas : 264245
+
+Cluster 1
+Frequency Avg : 1.1441709895853958
+Time Interval Avg : 39150.31469660993
+Std Deriv Avg : 0.0
+block # Avg : 17.66953431275492
+Number of datas : 101012
+
+Cluster 2
+Frequency Avg : 11.15965934751285
+Time Interval Avg : 1997.4225593823298
+Std Deriv Avg : 26139.721382764284
+block # Avg : 76.96866061635734
+Number of datas : 185996
+
+Cluster 3
+Frequency Avg : 2.262879294212004
+Time Interval Avg : 4378.624733338293
+Std Deriv Avg : 946.8985518740805
+block # Avg : 16.247587220959765
+Number of datas : 149620
+
+Total number of datas : 700873
