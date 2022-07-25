@@ -1,13 +1,14 @@
 #include "Sector.h"
 #include <string>
 
-Sector::Sector(char* id, double time, unsigned int frequency, double total, double avg, long size) {
+Sector::Sector(char* id, double time, unsigned int frequency, double total, double avg, double std_deriv, long size) {
 	SetId(id);
 	SetTimeStamp(time);
 	SetFrequency(frequency);
 	SetTotal(total);
 	SetAvg(avg);
 	SetSize(size);
+	SetStdDeriv(std_deriv);
 }
 
 Sector::Sector() {
@@ -21,6 +22,7 @@ void Sector::operator =(const Sector& other) {
 	SetTotal(other.total_);
 	SetAvg(other.avg_);
 	SetSize(other.size_);
+	SetStdDeriv(other.std_deriv_);
 }
 bool Sector::operator <(const Sector& other) {
 	return GetFrequency() < other.frequency_;
@@ -97,6 +99,14 @@ long Sector::GetSize() {
 	return this->size_;
 }
 
+void Sector::SetStdDeriv(double std_deriv) {
+	this->std_deriv_ = std_deriv;
+}
+
+double Sector::GetStdDeriv() {
+	return this->std_deriv_;
+}
+
 
 void Sector::Clear()
 {
@@ -107,6 +117,7 @@ void Sector::Clear()
 	SetTotal(0);
 	SetAvg(0);
 	SetSize(0);
+	SetStdDeriv(0);
 }
 
 void Sector::Calc(const Sector& other) {
@@ -118,7 +129,9 @@ void Sector::Calc(const Sector& other) {
 }
 
 std::ostream& operator << (std::ostream& stream, const Sector& sector) {
+	stream << std::fixed;
+	stream.precision(5);
 	stream << sector.sector_id_ << "," << sector.frequency_ <<
-		"," << sector.avg_ << "," << sector.size_;
+		"," << sector.avg_ << "," << sector.std_deriv_ << "," << sector.size_;
 	return stream;
 }

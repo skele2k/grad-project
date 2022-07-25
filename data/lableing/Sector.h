@@ -8,11 +8,12 @@ private:
 	unsigned int frequency_;
 	double total_;
 	double avg_;
+	double std_deriv_;
 	long size_;
 
 public:
 	Sector();
-	Sector(char* id, double time, unsigned int frequency, double total, double avg, long size);
+	Sector(char* id, double time, unsigned int frequency, double total, double avg, double std_deriv, long size);
 	void operator =(const Sector& other);
 	bool operator <(const Sector& other);
 	bool operator <=(const Sector& other);
@@ -31,6 +32,8 @@ public:
 	double GetAvg();
 	void SetSize(long size);
 	long GetSize();
+	void SetStdDeriv(double std_deriv);
+	double GetStdDeriv();
 
 	void Clear();
 	void Calc(const Sector& other);

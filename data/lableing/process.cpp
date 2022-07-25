@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include "Sector.h"
 
 #define TESTFRQSTD 10
@@ -12,7 +13,23 @@
 #define TESTMAXTIME 41122
 #define TRAINMAXTIME 34459
 
-int PostProcess() {
+void clearVector(std::vector<double*>& arr) {
+	while (!arr.empty()) {
+		double* elem = arr.back();
+		delete elem;
+		arr.pop_back();
+	}
+}
+
+double calcStdDeriv(std::vector<double*>& arr, double avg) {
+	double sum = 0;
+	for (int i = 0; i < arr.size(); ++i) {
+		sum += pow(*(arr[i]) - avg, 2);
+	}
+	return sqrt(sum / arr.size());
+}
+
+int PreProcess(const double maxval) {
 	std::cout << "Input file name : ";
 	char in_filename[20];
 	std::cin >> in_filename;
@@ -35,13 +52,18 @@ int PostProcess() {
 
 	int count = 0;
 	char line[51];
+	std::vector<double*> time_arr;
 
 	while (1) {
 		if (count < 2) {
-			in_file.getline(line, 50, ' ');
+			in_file.getline(line, 50, ',');
 			if (in_file.fail()) break;
 			if (count == 0) {
-				sector.SetTimeStamp(std::stod(line));
+				double time = std::stod(line);
+				sector.SetTimeStamp(time);
+				double* time_elem = new double;
+				*time_elem = time;
+				time_arr.push_back(time_elem);
 				sector.SetFrequency(1);
 			}
 			else {
@@ -56,8 +78,17 @@ int PostProcess() {
 			if (strcmp(sector.GetId(), sector_last.GetId())) {
 				if (strcmp(sector_last.GetId(), "null")) {
 					std::cout << sector_last.GetId() << std::endl;
+					if (sector_last.GetFrequency() > 2) {
+						sector_last.SetStdDeriv(calcStdDeriv(time_arr, sector_last.GetAvg()));
+					}
+					if (sector_last.GetFrequency() < 2) {
+						sector_last.SetAvg(maxval);
+					}
 					out_file << sector_last << '\n';
+
 				}
+				clearVector(time_arr);
+				sector_last.Clear();
 				sector_last = sector;
 			}
 			else {
@@ -193,44 +224,99 @@ int clusterCount() {
 		return 0;
 	}
 
+	Sector cluster_zero;
+	Sector cluster_one;
+	Sector cluster_two;
+	Sector cluster_three;
+	Sector* cluster = nullptr;
+
 	Sector sector;
 
 	int count = 0;
 	char line[51];
 
 	unsigned int num_count = 0;
-	unsigned int marked_count = 0;
+	unsigned int cluster0_count = 0;
+	unsigned int cluster1_count = 0;
+	unsigned int cluster2_count = 0;
+	unsigned int cluster3_count = 0;
 	for (int i = 0; i < 4; ++i) {
 		in_file.getline(line, 50, ',');
 	}
 	in_file.getline(line, 50, '\n');
 	while (1) {
-		if (count < 4) {
+		if (count < 5) {
 			in_file.getline(line, 50, ',');
 			if (in_file.fail()) 
 				break;
 			switch (count) {
-			case 0: {break; }
-			case 1: {break;  }
-			case 2: {break; }
-			case 3: {break; }
+			case 0: {
+				sector.Clear();
+				break; }
+			case 1: {
+				sector.SetFrequency(std::stoi(line));
+				break;
+			}
+			case 2: {
+				sector.SetAvg(std::stod(line));
+				break; 
+			}
+			case 3: {
+				sector.SetStdDeriv(std::stod(line));
+				break; 
+			}
+			case 4: {
+				sector.SetSize(std::stol(line));
+				break;
+			}
 			}
 		}
 		else {
 			in_file.getline(line, 50, '\n');
 			if (strcmp(line, "0") == 0) {
-				++marked_count;
+				++cluster0_count;
+				cluster = &cluster_zero;
 			}
+			else if (strcmp(line, "1") == 0) {
+				++cluster1_count;
+				cluster = &cluster_one;
+			}
+			else if (strcmp(line, "2") == 0) {
+				++cluster2_count;
+				cluster = &cluster_two;
+			}
+			else {
+				++cluster3_count;
+				cluster = &cluster_three;
+			}
+			cluster->SetFrequency(cluster->GetFrequency() + sector.GetFrequency());
+			cluster->SetAvg(cluster->GetAvg() + sector.GetAvg());
+			cluster->SetStdDeriv(cluster->GetStdDeriv() + sector.GetStdDeriv());
+			cluster->SetSize(cluster->GetSize() + sector.GetSize());
+			cluster = nullptr;
 			++num_count;
 			count = -1;
 		}
 		++count;
 	}
 	in_file.close();
-	std::cout << "mark count : " << marked_count << "\nnum count : " << num_count << std::endl;
+	unsigned int* count_pt = nullptr;
+	for (int i = 0; i < 4; ++i) {
+		switch (i) {
+		case 0: {	cluster = &cluster_zero; count_pt = &cluster0_count; break; }
+		case 1: {	cluster = &cluster_one; count_pt = &cluster1_count; break; }
+		case 2: {	cluster = &cluster_two; count_pt = &cluster2_count; break; }
+		case 3: {	cluster = &cluster_three; count_pt = &cluster3_count; break;	}
+		}
+		std::cout << "Cluster " << i << "\nAvg Frequency : " << cluster->GetFrequency() / *count_pt <<
+			"\nAvg Time Interval : " << cluster->GetAvg() / *count_pt << "\nAvg Time Std Deriv : " << cluster->GetStdDeriv() / *count_pt <<
+			"\nAvg # of blocks : " << cluster->GetSize() / *count_pt << "\nTotal numbers : " << *count_pt << '\n' << std::endl;
+	}
+
+	std::cout << "Total number of datas :" << num_count << std::endl;
 }
 int main() {
-	//PostProcess();
+	//PreProcess(TESTMAXTIME);
 	//Label(TRAINFRQSTD, TRAINAVGSTD);
 	//timeAvgConvert(TRAINMAXTIME);
 	clusterCount();
