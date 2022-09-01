@@ -17,7 +17,7 @@ public:
 	void addBlock(Block* block, int offset, int page);
 	void setNumberOfBlocks(unsigned int number);
 	unsigned int getNumberOfBlocks();
-	void markInvalid();
+	std::vector<int> markInvalid();
 	void clear();
 
 };

@@ -19,10 +19,15 @@ void AddressMapElement::clear() {
 	this->numberOfBlocks = 0;
 }
 
-void AddressMapElement::markInvalid() {
+std::vector<int> AddressMapElement::markInvalid() {
+	std::vector<int> lastFreePages;
 	for (int i = 0; i < this->blocks.size(); ++i) {
+		if (blocks[i]->isFull()) {
+			lastFreePages.push_back(this->blocks[i]->getNumberOfFreePages());
+		}
 		this->blocks[i]->markBlock(this->offsets[i], this->pages[i], INVALID);
 	}
+	return lastFreePages;
 }
 
 void AddressMapElement::setNumberOfBlocks(unsigned int number) {

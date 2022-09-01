@@ -3,15 +3,29 @@
 
 FTL::FTL(int numberOfSSDBlocks, int blockSize, int pageSize, int numberOfPages):
 NUMBEROFSSDBLOCKS(numberOfSSDBlocks), BLOCKSIZE(blockSize), PAGESIZE(pageSize),
-NUMBEROFPAGES(numberOfPages), KB(1024), writeAmplification(0) {
+NUMBEROFPAGES(numberOfPages), KB(1024), writeAmplification(0), fullBlock(numberOfPages, std::vector<Block*>(0,0)) {
 	for (int i = 0; i < NUMBEROFSSDBLOCKS; ++i) {
 		this->freeBlock.push_back(new Block(NUMBEROFPAGES));
+	}
+	
+}
+
+void FTL::relocateFullBlockElem(std::vector<int> lastFreePages) {
+	for (int i = 0; i < lastFreePages.size(); ++i) {
+		int lastFreePage = lastFreePages[i];
+		for (int j = 0; j < fullBlock[lastFreePage].size(); ++j) {
+			if (fullBlock[lastFreePage][j]->getNumberOfFreePages() != lastFreePage) {//idx and number of free pages should be same
+				fullBlock[fullBlock[lastFreePage][j]->getNumberOfFreePages()].push_back(fullBlock[lastFreePage][j]);
+				fullBlock[lastFreePage].erase(fullBlock[lastFreePage].begin() + j);
+			}
+		}
 	}
 }
 
 void FTL::invalidateOverlapped(std::map<unsigned int, AddressMapElement*>::iterator cur) {
-	cur->second->markInvalid();
+	relocateFullBlockElem(cur->second->markInvalid());
 	delete cur->second;
+	addressTable.erase(cur);
 }
 
 void FTL::markOverlapped(std::map<unsigned int, AddressMapElement*>::iterator found) {
@@ -19,9 +33,8 @@ void FTL::markOverlapped(std::map<unsigned int, AddressMapElement*>::iterator fo
 	++cur;
 	while (cur != addressTable.end()) {
 		if ((found->first + found->second->getNumberOfBlocks() - 1) >= cur->first) {
-			invalidateOverlapped(cur);
 			std::map<unsigned int, AddressMapElement*>::iterator oneToDelete = cur++;
-			addressTable.erase(oneToDelete);
+			invalidateOverlapped(oneToDelete);
 		}
 		else {
 			break;
@@ -33,7 +46,15 @@ void FTL::markOverlapped(std::map<unsigned int, AddressMapElement*>::iterator fo
 		--cur;
 		if (cur->first + cur->second->getNumberOfBlocks() - 1 >= found->first) {
 			invalidateOverlapped(cur);
-			addressTable.erase(cur);
+		}
+	}
+}
+
+void FTL::greedyGC() {
+	std::vector<Relocater> relocInfos;
+	for (auto iter = fullBlock.begin(); iter != fullBlock.end(); ++iter) {
+		for (int i = 0; i < iter->size(); ++i) {
+			relocInfos = iter->at(i)->erase();
 		}
 	}
 }
@@ -44,7 +65,7 @@ void FTL::issueIOCommand(Sector& sector) {
 	std::map<unsigned int, AddressMapElement*>::iterator found = addressTable.find(sector.GetId());
 
 	if (found != addressTable.end()) {
-		found->second->markInvalid();
+		relocateFullBlockElem(found->second->markInvalid());
 		found->second->clear();
 	}
 	else {
@@ -58,7 +79,7 @@ void FTL::issueIOCommand(Sector& sector) {
 		pagesNeeded = freeBlock[0]->write(pagesNeeded, found->second, found->first);
 		if (last != pagesNeeded) {
 			if (freeBlock[0]->isFull()) {
-				fullBlock.insert({ NUMBEROFPAGES - freeBlock[0]->getNumberOfInvalids(), freeBlock[0] });
+				fullBlock[freeBlock[0]->getNumberOfFreePages()].push_back(freeBlock[0]);
 				freeBlock.erase(freeBlock.begin());
 			}
 			 if (pagesNeeded == 0) {
@@ -66,7 +87,7 @@ void FTL::issueIOCommand(Sector& sector) {
 			}
 			 last = pagesNeeded;
 		}
-		if ((freeBlock.size() / (float)NUMBEROFSSDBLOCKS) < 0.31) {
+		if ((freeBlock.size() / (float)NUMBEROFSSDBLOCKS) < 0.51) {
 			//gcgc
 			bool eraseFailed = false;
 			if (eraseFailed) {
@@ -134,6 +155,9 @@ void clearBlockMap(std::map<unsigned int, Elem*> mapItem) {
 
 FTL::~FTL() {
 	clearBlockVector(freeBlock);
-	clearBlockMap(fullBlock);
 	clearBlockMap(addressTable);
+	for (auto iter = fullBlock.begin(); iter != fullBlock.end(); ++iter) {
+		clearBlockVector(*iter);
+	}
+	fullBlock.clear();
 }
