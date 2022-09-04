@@ -20,14 +20,14 @@ void AddressMapElement::clear() {
 }
 
 std::vector<int> AddressMapElement::markInvalid() {
-	std::vector<int> lastFreePages;
+	std::vector<int> lastValidPages;
 	for (int i = 0; i < this->blocks.size(); ++i) {
 		if (blocks[i]->isFull()) {
-			lastFreePages.push_back(this->blocks[i]->getNumberOfFreePages());
+			lastValidPages.push_back(this->blocks[i]->getNumberOfValidPages());
 		}
 		this->blocks[i]->markBlock(this->offsets[i], this->pages[i], INVALID);
 	}
-	return lastFreePages;
+	return lastValidPages;
 }
 
 void AddressMapElement::setNumberOfBlocks(unsigned int number) {
@@ -36,4 +36,15 @@ void AddressMapElement::setNumberOfBlocks(unsigned int number) {
 
 unsigned int AddressMapElement::getNumberOfBlocks() {
 	return this->numberOfBlocks;
+}
+
+void AddressMapElement::unlinkBlock(Block* block) {
+	for (int i = 0; i < this->blocks.size(); ++i) {
+		if (blocks[i] == block) {
+			this->blocks.erase(this->blocks.begin() + i);
+			this->pages.erase(this->pages.begin() + i);
+			this->offsets.erase(this->offsets.begin() + i);
+			break;
+		}
+	}
 }

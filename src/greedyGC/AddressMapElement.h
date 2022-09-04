@@ -18,6 +18,7 @@ public:
 	void setNumberOfBlocks(unsigned int number);
 	unsigned int getNumberOfBlocks();
 	std::vector<int> markInvalid();
+	void unlinkBlock(Block* block);
 	void clear();
 
 };

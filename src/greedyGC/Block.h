@@ -18,7 +18,7 @@ private :
 	int* block;
 	int getFreePageIdx();
 	const int NUMBEROFPAGES;
-	int freePages;
+	int validPages;
 
 public :
 	Block(int numberOfPages);
@@ -27,6 +27,6 @@ public :
 	std::vector<Relocater> erase();
 	void markBlock(int idx, int pages, int mark);
 	bool isFull();
-	int getNumberOfFreePages();
+	int getNumberOfValidPages();
 };
 

@@ -1,7 +1,8 @@
 #include "Block.h"
 
-Block::Block(int numberOfPages): full(false), NUMBEROFPAGES(numberOfPages), freePages(numberOfPages) {
-	this->block = new int[NUMBEROFPAGES]{FREE};
+Block::Block(int numberOfPages): full(false), NUMBEROFPAGES(numberOfPages), validPages(numberOfPages) {
+	this->block = new int[NUMBEROFPAGES];
+	memset(this->block, FREE, sizeof(unsigned int) * NUMBEROFPAGES);
 }
 
 Block::~Block() {
@@ -9,20 +10,22 @@ Block::~Block() {
 }
 
 void Block::markBlock(int idx, int pages, int mark) {
-	if (mark == INVALID) {
-		this->freePages -= pages;
-	}
 	for (int i = idx; i < idx + pages; ++i) {
 		this->block[i] = mark;
+	}
+	if (mark == INVALID) {
+		this->validPages -= pages;
 	}
 }
 
 std::vector<Relocater> Block::erase() {
 	int last = -1;
 	Relocater reloc;
+	bool isValidExist = false;
 	std::vector<Relocater> relocInfos;
 	for (int i = 0; i < NUMBEROFPAGES; ++i) {
 		if (this->block[i] > FREE) {
+			isValidExist = true;
 			if (last != this->block[i]) {
 				if (last >= 0) {
 					relocInfos.push_back(reloc);
@@ -37,9 +40,14 @@ std::vector<Relocater> Block::erase() {
 		}
 		this->block[i] = FREE;
 	}
-	this->freePages = NUMBEROFPAGES;
+	if (isValidExist) {
+		relocInfos.push_back(reloc);
+	}
+	this->validPages = NUMBEROFPAGES;
+	this->full = false;
 	return relocInfos;
 }
+
 int Block::write(int pagesNeeded, AddressMapElement* addrElem, int sectorNumber) {
 	if (this->full) return pagesNeeded;
 	int idx = getFreePageIdx();
@@ -68,6 +76,6 @@ bool Block::isFull() {
 	return this->full;
 }
 
-int Block::getNumberOfFreePages() {
-	return this->freePages;
+int Block::getNumberOfValidPages() {
+	return this->validPages;
 }

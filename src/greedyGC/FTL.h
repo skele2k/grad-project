@@ -22,10 +22,12 @@ private:
 	std::vector<std::vector<Block*>> fullBlock;
 	std::map<unsigned int, AddressMapElement*> addressTable;
 	void clearBlockVector(std::vector<Block*>& block);
-	void issueIOCommand(Sector& sector);
+	bool issueIOCommand(Sector& sector);
 	void markOverlapped(std::map<unsigned int, AddressMapElement*>::iterator found);
-	void relocateFullBlockElem(std::vector<int> lastFreePages);
-	void greedyGC();
+	void relocateFullBlockElem(std::vector<int> lastValidPages);
+	bool greedyGC();
+	bool writeInDrive(int pagesNeeded, std::map<unsigned int, AddressMapElement*>::iterator found);
+	std::map<unsigned int, AddressMapElement*>::iterator checkSectorIdExist(std::map<unsigned int, AddressMapElement*>::iterator found, unsigned int sectorId);
 public:
 	FTL(int numberOfSSDBlocks, int blockSize, int pageSize, int numberOfPages);
 	~FTL();
