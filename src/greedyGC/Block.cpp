@@ -9,25 +9,25 @@ Block::~Block() {
 	delete [] this->block;
 }
 
-void Block::markBlock(int idx, int pages, int mark) {
-	for (int i = idx; i < idx + pages; ++i) {
+void Block::markBlock(int idx, int pages, int mark) {//biggest LBA is still smaller than upper limit of LBA used for training and test data.
+	for (int i = idx; i < idx + pages; ++i) {//mark can be LBA, FREE, INVALID
 		this->block[i] = mark;
 	}
-	if (mark == INVALID) {
+	if (mark == INVALID) {//counting number of invalid pages
 		this->validPages -= pages;
 	}
 }
 
 std::vector<Relocater> Block::erase() {
-	int last = -1;
+	int last = FREE;
 	Relocater reloc;
 	bool isValidExist = false;
 	std::vector<Relocater> relocInfos;
 	for (int i = 0; i < NUMBEROFPAGES; ++i) {
-		if (this->block[i] > FREE) {
-			isValidExist = true;
+		if (this->block[i] > FREE) {//FREE and INVALID < 0. LBAs >= 0.
+			isValidExist = true;//flag used for to store last valid page information
 			if (last != this->block[i]) {
-				if (last >= 0) {
+				if (last > FREE) {
 					relocInfos.push_back(reloc);
 				}
 				reloc.sectorNumber = this->block[i];
@@ -41,7 +41,7 @@ std::vector<Relocater> Block::erase() {
 		this->block[i] = FREE;
 	}
 	if (isValidExist) {
-		relocInfos.push_back(reloc);
+		relocInfos.push_back(reloc);//storing last valid page that didnt get stored in loop.
 	}
 	this->validPages = NUMBEROFPAGES;
 	this->full = false;
