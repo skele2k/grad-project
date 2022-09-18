@@ -1,0 +1,6 @@
+data/testData.csv
+data/trainData.csv
+data/lableing/testDataLabeled.csv
+data/lableing/trainDataLabeled.csv
+data/clustering/trainDataClustered.csv
+data/clustering/testDataClustered.csv
