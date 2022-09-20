@@ -4,10 +4,12 @@
 FTL::FTL(int numberOfSSDBlocks, int blockSize, int pageSize, int numberOfPages):
 NUMBEROFSSDBLOCKS(numberOfSSDBlocks), BLOCKSIZE(blockSize), PAGESIZE(pageSize),
 NUMBEROFPAGES(numberOfPages), KB(1024), ERASELIMIT((NUMBEROFPAGES/10)+1), writeAmplification(0),
-fullBlock(numberOfPages+1, std::vector<Block*>(0,0)) {
+fullBlock(numberOfPages+1, std::vector<Block*>(0,0)), nandWrite(0), requestedWrite(0) {
 	for (int i = 0; i < NUMBEROFSSDBLOCKS; ++i) {
 		this->freeBlock.push_back(new Block(NUMBEROFPAGES));
 	}
+	curBlock = freeBlock[0];
+	freeBlock.erase(freeBlock.begin());
 }
 
 void FTL::relocateFullBlockElem(std::vector<int> lastValidPages) {
@@ -63,7 +65,7 @@ bool FTL::greedyGC() {
 			for (int i = 0; i < relocInfos.size(); ++i) {//relocating valid pages to another block.
 				auto found = addressTable.find(relocInfos[i].sectorNumber);//if LBA is not found whole algorithm is in error.
 				found->second->unlinkBlock(*fullBlockIter->begin());
-				this->writeAmplification += relocInfos[i].pages;
+				this->nandWrite += relocInfos[i].pages;
 				if (!writeInDrive(relocInfos[i].pages, found)) {
 					return false;//this means no space available anymore.
 				}
@@ -75,11 +77,14 @@ bool FTL::greedyGC() {
 }
 
 bool FTL::writeInDrive(int& pagesNeeded, std::map<unsigned int, AddressMapElement*>::iterator found) {
-	while (true) {
-		if (freeBlock.size() == 0) break;
-		pagesNeeded = freeBlock[0]->write(pagesNeeded, found->second, found->first);
-		if (freeBlock[0]->isFull()) {
-			fullBlock[freeBlock[0]->getNumberOfValidPages()].push_back(freeBlock[0]);
+	while (freeBlock.size() > 0 || !(curBlock->isFull())) {
+		pagesNeeded = curBlock->write(pagesNeeded, found->second, found->first);
+		if (curBlock->isFull()) {
+			fullBlock[curBlock->getNumberOfValidPages()].push_back(curBlock);
+			if (freeBlock.size() == 0) {
+				break;
+			}
+			curBlock = freeBlock[0];
 			freeBlock.erase(freeBlock.begin());
 		}
 		if (pagesNeeded == 0) {
@@ -99,14 +104,14 @@ std::map<unsigned int, AddressMapElement*>::iterator FTL::checkSectorIdExist(std
 	}
 	else {
 		AddressMapElement* addrElem = new AddressMapElement;
-		addressTable.insert({ sectorId, addrElem });
-		found = addressTable.find(sectorId);
+		found = addressTable.insert({ sectorId, addrElem }).first;
 	}
 	return found;
 }
 
 bool FTL::issueIOCommand(Sector& sector) {
 	int pagesNeeded = std::ceil((sector.GetSize() * BLOCKSIZE) / (double)(PAGESIZE * KB));
+	this->requestedWrite += pagesNeeded;
 	int last = pagesNeeded;
 	bool success = true;
 	std::map<unsigned int, AddressMapElement*>::iterator found = checkSectorIdExist(addressTable.find(sector.GetId()), sector.GetId());
@@ -122,7 +127,7 @@ bool FTL::issueIOCommand(Sector& sector) {
 			success = writeInDrive(pagesNeeded, found);
 		}
 	}
-	if (((freeBlock.size() + fullBlock[NUMBEROFPAGES].size()) / (float)NUMBEROFSSDBLOCKS) < 0.31){
+	if (((freeBlock.size() + fullBlock[NUMBEROFPAGES].size() + 1) / (float)NUMBEROFSSDBLOCKS) < 0.31){
 		//free blocks + all valid blocks / number of total blocks < 0.31
 		if (!greedyGC()) {
 			success = false;
@@ -181,13 +186,19 @@ int FTL::getIOCommand() {
 			if (progress % 500000 == 0) {//to show how many commands processed.
 				std::cout << progress << " processed" << std::endl;
 			}
+			if (this->requestedWrite > 4000000000) {
+				std::cout << "warning" << std::endl;
+			}
 			count = -1;
 		}
 		++count;
 
 	}
 	in_file.close();
-	std::cout << "Write Amplification : " << this->writeAmplification << std::endl;
+	std::cout << "Requested Write : " << this->requestedWrite  << std::endl <<
+		"Additional Write : " << this->nandWrite << std::endl <<
+		"Nand Write : " << this->requestedWrite + this->nandWrite << std::endl <<
+		"Write Amplification : " << (this->requestedWrite + this->nandWrite) / static_cast<double>(requestedWrite) << std::endl;
 }
 
 template <class Elem>
@@ -204,5 +215,6 @@ FTL::~FTL() {
 	for (auto iter = fullBlock.begin(); iter != fullBlock.end(); ++iter) {
 		clearBlockVector(*iter);
 	}
+	delete this->curBlock;
 	fullBlock.clear();
 }
