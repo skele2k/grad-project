@@ -3,7 +3,7 @@
 
 FTL::FTL(int numberOfSSDBlocks, int blockSize, int pageSize, int numberOfPages):
 NUMBEROFSSDBLOCKS(numberOfSSDBlocks), BLOCKSIZE(blockSize), PAGESIZE(pageSize),
-NUMBEROFPAGES(numberOfPages), KB(1024), ERASELIMIT((NUMBEROFPAGES/10)+1), writeAmplification(0),
+NUMBEROFPAGES(numberOfPages), KB(1024), ERASELIMIT((NUMBEROFPAGES/5)+1), writeAmplification(0),
 fullBlock(numberOfPages+1, std::vector<Block*>(0,0)), nandWrite(0), requestedWrite(0) {
 	for (int i = 0; i < NUMBEROFSSDBLOCKS; ++i) {
 		this->freeBlock.push_back(new Block(NUMBEROFPAGES));
@@ -82,11 +82,21 @@ bool FTL::greedyGC() {
 }
 
 void FTL::writeByTemp(int& pagesNeeded, std::map<unsigned int, AddressMapElement*>::iterator found, Block* &block, char temperature) {
+	if (block == nullptr) {
+		if (freeBlock.size() == 0) {
+			return;
+		}
+		else {
+			block = freeBlock[0];
+			freeBlock.erase(freeBlock.begin());
+		}
+	}
 	while (freeBlock.size() > 0 || !(block->isFull())) {
 		pagesNeeded = block->write(pagesNeeded, found->second, found->first);
 		if (block->isFull()) {
 			fullBlock[block->getNumberOfValidPages()].push_back(block);
 			if (freeBlock.size() == 0) {
+				block = nullptr;
 				break;
 			}
 			block = freeBlock[0];
@@ -173,13 +183,15 @@ void clearBlockMap(std::map<unsigned int, Elem*> mapItem) {
 
 FTL::~FTL() {
 	clearBlockVector(freeBlock);
-	clearBlockMap(addressTable);
 	for (auto iter = fullBlock.begin(); iter != fullBlock.end(); ++iter) {
 		clearBlockVector(*iter);
 	}
 	fullBlock.clear();
-	delete freeHot;
-	delete freeCold;
+	if (freeHot != nullptr)
+		delete freeHot;
+	if (freeCold != nullptr)
+		delete freeCold;
+	clearBlockMap(addressTable);
 }
 
 void FTL::printResult() {

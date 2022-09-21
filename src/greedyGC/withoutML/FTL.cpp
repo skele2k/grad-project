@@ -3,7 +3,7 @@
 
 FTL::FTL(int numberOfSSDBlocks, int blockSize, int pageSize, int numberOfPages):
 NUMBEROFSSDBLOCKS(numberOfSSDBlocks), BLOCKSIZE(blockSize), PAGESIZE(pageSize),
-NUMBEROFPAGES(numberOfPages), KB(1024), ERASELIMIT((NUMBEROFPAGES/10)+1), writeAmplification(0),
+NUMBEROFPAGES(numberOfPages), KB(1024), ERASELIMIT((NUMBEROFPAGES/5)+1), writeAmplification(0),
 fullBlock(numberOfPages+1, std::vector<Block*>(0,0)), nandWrite(0), requestedWrite(0) {
 	for (int i = 0; i < NUMBEROFSSDBLOCKS; ++i) {
 		this->freeBlock.push_back(new Block(NUMBEROFPAGES));
@@ -77,11 +77,21 @@ bool FTL::greedyGC() {
 }
 
 bool FTL::writeInDrive(int& pagesNeeded, std::map<unsigned int, AddressMapElement*>::iterator found) {
+	if (curBlock == nullptr) {
+		if (freeBlock.size() == 0) {
+			return false;
+		}
+		else {
+			curBlock = freeBlock[0];
+			freeBlock.erase(freeBlock.begin());
+		}
+	}
 	while (freeBlock.size() > 0 || !(curBlock->isFull())) {
 		pagesNeeded = curBlock->write(pagesNeeded, found->second, found->first);
 		if (curBlock->isFull()) {
 			fullBlock[curBlock->getNumberOfValidPages()].push_back(curBlock);
 			if (freeBlock.size() == 0) {
+				curBlock = nullptr;
 				break;
 			}
 			curBlock = freeBlock[0];
@@ -103,8 +113,7 @@ std::map<unsigned int, AddressMapElement*>::iterator FTL::checkSectorIdExist(std
 		found->second->clear();
 	}
 	else {
-		AddressMapElement* addrElem = new AddressMapElement;
-		found = addressTable.insert({ sectorId, addrElem }).first;
+		found = addressTable.insert({ sectorId, new AddressMapElement }).first;
 	}
 	return found;
 }
@@ -161,33 +170,80 @@ int FTL::getIOCommand() {
 	}
 
 	int count = 0;
-	char line[51];
+	char line[101];
+	//char word[50]{'\0'};
 	int progress = 0;
 	Sector sector;
-
+	in_file.getline(line, 100, '\n');
+	/*
 	while (true) {
-		if (count < 2) {
-			in_file.getline(line, 50, ',');
-			if (in_file.fail()) break;
-			if (count == 0) {
-				sector.Clear();//first column is time table. its only used for ML model.
+		in_file.getline(line, 100, '\n');
+		if (in_file.fail()) break;
+		int i = 0;
+		int j = 0;
+		bool eol = false;
+		bool eor = false;
+		while (true) {
+			if (line[i] == '\0') {
+				word[j] = '\0';
+				j = -1;
+				eol = true;
+				eor = true;
+			}
+			else if (line[i] == ',') {
+				word[j] = '\0';
+				j = -1;
+				eol = true;
+			}
+			if (eol) {
+				switch (count) {
+				case 2: {sector.Clear(); break; }
+				case 3: {sector.SetId(std::stoi(word)); break; }
+				case 4: {sector.SetSize(std::stoi(word)); break; }
+				case 6: {
+					count = -1;
+					if (!issueIOCommand(sector)) {
+						return -1;
+					}
+					++progress;
+					if (progress % 500000 == 0) {//to show how many commands processed.
+						std::cout << progress << " processed" << std::endl;
+					}
+					break;	
+				}
+				}
+				++count;
+				eol = false;
+			}
+			if (eor) {
+				break;
 			}
 			else {
-				sector.SetId(std::stoi(line));
+				word[j] = line[i];
+			}
+			++j;
+			++i;
+		}
+	}*/
+	
+	while (true) {
+		if (count < 6) {
+			in_file.getline(line, 50, ',');
+			if (in_file.fail()) break;
+			switch (count) {
+			case 2: {sector.Clear(); break; }
+			case 3: {sector.SetId(std::stoi(line)); break; }
+			case 4: {sector.SetSize(std::stoi(line)); break; }
 			}
 		}
 		else {
 			in_file.getline(line, 50, '\n');
-			sector.SetSize(std::stoi(line));
 			if (!issueIOCommand(sector)) {
 				return -1;
 			}
 			++progress;
 			if (progress % 500000 == 0) {//to show how many commands processed.
 				std::cout << progress << " processed" << std::endl;
-			}
-			if (this->requestedWrite > 4000000000) {
-				std::cout << "warning" << std::endl;
 			}
 			count = -1;
 		}
@@ -211,10 +267,12 @@ void clearBlockMap(std::map<unsigned int, Elem*> mapItem) {
 
 FTL::~FTL() {
 	clearBlockVector(freeBlock);
-	clearBlockMap(addressTable);
 	for (auto iter = fullBlock.begin(); iter != fullBlock.end(); ++iter) {
 		clearBlockVector(*iter);
 	}
-	delete this->curBlock;
+	if (curBlock != nullptr) {
+		delete this->curBlock;
+	}
 	fullBlock.clear();
+	clearBlockMap(addressTable);
 }

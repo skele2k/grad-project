@@ -1,18 +1,79 @@
 #include <iostream>
-#include "tensorflow/c/c_api.h"
+//#include "tensorflow/c/c_api.h"
 #include <array>
 #include <vector>
 #include <map>
 #include <fstream>
 #include "Sector.h"
+#include "FTL.h"
 #include <string>
-#include <algorithm>
-#include <numeric>
+//#include <algorithm>
+//#include <numeric>
 #include <time.h>
 
-#define WINDOW_SIZE 128
-#define NINPUT 2
+//#define WINDOW_SIZE 128
+//#define NINPUT 2
 
+int main() {
+    //parameters : number of ssd blocks, blktrace block size, page size(KB), number of pages in one block
+    //FTL ftl(128000, 512, 16, 256);//500GB
+    //128GB - Memory size from README of training data workload. But out of memory happens.
+    //FTL ftl(2, 512, 16, 256);//for test
+    FTL ftl(1000, 512, 16, 256);//3.9GB. for Test Data.
+
+    std::cout << "Input file name : ";
+    char in_filename[20];
+    std::cin >> in_filename;
+    std::ifstream in_file(in_filename, std::ios::in);
+    if (in_file.fail()) {
+        std::cout << "File open failed!" << std::endl;
+        return 0;
+    }
+    int count = 0;
+    char line[51];
+    int progress = 0;
+    Sector sector;
+
+    time_t startTime = time(nullptr);
+    while (true) {
+        if (count < 6) {
+            in_file.getline(line, 50, ',');
+            if (in_file.fail()) break;
+            switch (count) {
+            case 2: {sector.Clear(); break; }
+            case 3: {sector.SetId(std::stoi(line)); break; }
+            case 4: {sector.SetSize(std::stoi(line)); break; }
+            }
+        }
+        else {
+            in_file.getline(line, 50, '\n');
+            if (std::stof(line) > 0.5) {
+                sector.SetTemperature('h');
+            }
+            else {
+                sector.SetTemperature('c');
+            }
+            if (!ftl.issueIOCommand(sector)) {
+                return -1;
+            }
+            ++progress;
+            if (progress % 500000 == 0) {//to show how many commands processed.
+                std::cout << progress << " processed" << std::endl;
+            }
+            count = -1;
+        }
+        ++count;
+
+    }
+    time_t endTime = time(nullptr);
+    std::cout << "Time : " << endTime - startTime << " seconds" << std::endl;
+
+    in_file.close();
+    ftl.printResult();
+    system("pause");
+}
+
+/*
 using namespace std;
 
 int main() {
@@ -88,22 +149,7 @@ int main() {
             for (int i = 0; i < WINDOW_SIZE; ++i) {
                 timeDeltaData[i] = (timeDiffData[i] - mean) / stdev;
             }
-            //std::cout << mean << ' ' << stdev << std::endl;
-            /*
-            double mean = timeDiffSum / timeDiffAmount;
-            double accumulated = 0;
-            for (int i = 0; i < timeDiffs.size(); ++i) {
-                accumulated += pow((timeDiffs[i] - mean), 2);
-            }
-            float stdDeriv = sqrt((accumulated / timeDiffAmount));
-            for (int i = 0; i < WINDOW_SIZE; ++i) {
-                if (timeDiffData[i] > 0) {
-                    timeDeltaData[i] = (timeDiffData[i] - mean) / stdDeriv;
-                }
-                else {
-                    timeDeltaData[i] = 0;
-                }
-            }*/
+
 
 
             ++progress;
@@ -117,7 +163,7 @@ int main() {
     }
     time_t endTime = time(nullptr);
     std::cout << "Time : " << endTime - startTime << " seconds" << std::endl;
-}
+}*/
 
 /*
 int main() {

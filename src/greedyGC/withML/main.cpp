@@ -1,17 +1,15 @@
 #include "FTL.h"
 #include <tensorflow/c/c_api.h>
 #include <array>
-#include <algorithm>
-#include <numeric>
 #define WINDOW_SIZE 128
 #define NINPUT 2
 
 int main() {
 	//parameters : number of ssd blocks, blktrace block size, page size(KB), number of pages in one block
-	//FTL ftl(128000, 512, 16, 256);//500GB
+	FTL ftl(128000, 512, 16, 256);//500GB
 	//128GB - Memory size from README of training data workload. But out of memory happens.
 	//FTL ftl(2, 512, 16, 256);//for test
-	FTL ftl(1000, 512, 16, 256);//3.9GB. for Test Data.
+	//FTL ftl(1000, 512, 16, 256);//3.9GB. for Test Data.
 
     std::map<unsigned int, float> lastEncounter;
     std::cout << "Input file name : ";
@@ -22,16 +20,14 @@ int main() {
         std::cout << "File open failed!" << std::endl;
         return 0;
     }
-
+    const double mean = 1209.994305032752;
+    const double stdev = 3094.1049291082736;
     int count = 0;
     char line[51];
     int progress = 0;
     Sector sector;
     float timeStamp = 0;
     float timeDiff = 0;
-    //double timeDiffSum = 0;
-    //unsigned int timeDiffAmount = 0;
-    //std::vector<float> timeDiffs;
 
     auto* run_options = TF_NewBufferFromString("", 0);
     auto* session_options = TF_NewSessionOptions();
@@ -105,9 +101,6 @@ int main() {
             else {
                 timeDiff = timeStamp - timeElem->second;
                 timeElem->second = timeStamp;
-                //timeDiffSum += timeDiff;
-                //++timeDiffAmount;
-                //timeDiffs.push_back(timeDiff);
             }
             memcpy(&sectorIdData[0], &sectorIdData[1], sizeof(double) * (WINDOW_SIZE - 1));
             memcpy(&timeDeltaData[0], &timeDeltaData[1], sizeof(float) * (WINDOW_SIZE - 1));
@@ -115,21 +108,9 @@ int main() {
             sectorIdData[WINDOW_SIZE - 1] = sector.GetId();
             timeDiffData[WINDOW_SIZE - 1] = timeDiff;
 
-            double sum = std::accumulate(timeDiffData.begin(), timeDiffData.end(), 0.0);
-            double mean = sum / timeDiffData.size();
-            double accum = 0.0;
-            std::for_each(timeDiffData.begin(), timeDiffData.end(), [&](const double d) {
-                accum += (d - mean) * (d - mean);
-                });
-
-            double stdev = sqrt(accum / (timeDiffData.size()));
+            
             for (int i = 0; i < WINDOW_SIZE; ++i) {
-                if (timeDiffData[i] > 0) {
-                    timeDeltaData[i] = (timeDiffData[i] - mean) / stdev;
-                }
-                else {
-                    timeDeltaData[i] = 0;
-                }
+                timeDeltaData[i] = (timeDiffData[i] - mean) / stdev;
             }
 
             sectorId[0] = sectorIdData;
@@ -154,7 +135,7 @@ int main() {
             if (TF_GetCode(status) != TF_OK) {
                 std::cout << TF_Message(status) << '\n';
             }
-            if (*static_cast<float*>(TF_TensorData(output_values[0])) > 0.5) {
+            if (*(static_cast<float*>(TF_TensorData(output_values[0]))) > 0.5) {
                 sector.SetTemperature('h');
             }
             else {
