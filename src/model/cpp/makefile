@@ -1,7 +1,7 @@
 CC=gcc
 CPC=g++
 tensorflow=-ltensorflow
-filename=model
+filename=model_3class
 
 runc: ${filename}.c 
 	${CC} ${filename}.c ${tensorflow} -o ${filename}

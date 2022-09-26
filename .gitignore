@@ -4,3 +4,6 @@ data/lableing/testDataLabeled.csv
 data/lableing/trainDataLabeled.csv
 data/clustering/trainDataClustered.csv
 data/clustering/testDataClustered.csv
+data/clustering/data/Fi1Clustered
+data/clustering/visualization/cluster visualized
+data/clustering/visualization/Fi1Visualized
