@@ -7,7 +7,7 @@
 
 > ### Odgerel Ariunbold (201824623)
 
-> ### Ganchuluun Narantsatsralt (201824621
+> ### Ganchuluun Narantsatsralt (201824621)
 
 ```data``` folder contains the data to train and currently it is only the sample file. 
 
