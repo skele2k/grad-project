@@ -1,16 +1,13 @@
-# FTL Optimization for Deep-Learning based workloads
+# SSD performance improvement through deep learning-based workload analysis
 2023 Pusan National University Graduation Project
 
 
 ### Contributors: 
 > ### 최성찬 (201824641)
-> **Contact info - 010-xxxx-xxxx**
 
 > ### Odgerel Ariunbold (201824623)
-> **Contact info - 010-xxxx-xxxx**
 
-> ### Ganchuluun Narantsatsralt (201824621)
-> **Contact info - 010-7591-0810**
+> ### Ganchuluun Narantsatsralt (201824621
 
 ```data``` folder contains the data to train and currently it is only the sample file. 
 
@@ -22,8 +19,13 @@
 
   ```data/labeling/Sector.cpp``` is a code to calculate frequency, access interval, and overall i/o size.
 
-```src/``` only source codes must be included in the subfolder of ```src```
+```src/``` only source codes must be included in the subfolder of ```src```   
 
-```src/model``` folder contains the deep learning and machine learning models to be implemented
+```src/greedyGC``` Garbage Collection algorithm implementation ```src```
 
-```src/utils``` if you need any other script place the script in this folder
+
+```src/model``` Deep learning models
+
+```src/model/cpp``` Deployment of LSTM Model to C++ environment. 
+
+```src/utils``` other useful scripts 
