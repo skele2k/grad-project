@@ -1,15 +1,11 @@
 #pragma once
 #include "AddressMapElement.h"
 #include <vector>
+#include <map>
 
 #define INVALID -2
 #define FREE -1
 class AddressMapElement;
-
-typedef struct relocater {
-	int sectorNumber;
-	int pages;
-}Relocater;
 
 class Block
 {
@@ -20,16 +16,18 @@ private :
 	const int NUMBEROFPAGES;
 	int validPages;
 	char temperature;
+	const int blockID;
 
 public :
-	Block(int numberOfPages);
+	Block(int numberOfPages, int id);
 	~Block();
 	int write(int pagesNeeded, AddressMapElement* addrElem, int sectorNumber);
-	std::vector<Relocater> erase();
+	std::map<int, int> erase();
 	void markBlock(int idx, int pages, int mark);
 	bool isFull();
 	int getNumberOfValidPages();
 	void setTemperature(char temp);
 	char getTemperature();
+	int getBlockID();
 };
 
