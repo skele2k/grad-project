@@ -19,13 +19,14 @@ void AddressMapElement::clear() {
 	this->numberOfBlocks = 0;
 }
 
-std::vector<int> AddressMapElement::markInvalid() {
-	std::vector<int> lastValidPages;//for to update fullBlock list
-	Block* lastBlock = nullptr;
+std::map<int, int> AddressMapElement::markInvalid() {
+	std::map<int, int> lastValidPages;//for to update fullBlock list
 	for (int i = 0; i < this->blocks.size(); ++i) {
-		if (blocks[i]->isFull() && blocks[i] != lastBlock) {//if two block ptrs are pointing same block, recording number of invalid once is enough.
-			lastBlock = blocks[i];
-			lastValidPages.push_back(this->blocks[i]->getNumberOfValidPages());
+		if (blocks[i]->isFull()) {//if two block ptrs are pointing same block, recording number of invalid once is enough.
+			auto found = lastValidPages.find(blocks[i]->getBlockID());
+			if (found == lastValidPages.end()) {
+				lastValidPages.insert({ blocks[i]->getBlockID(), blocks[i]->getNumberOfValidPages()});
+			}
 		}
 		this->blocks[i]->markBlock(this->offsets[i], this->pages[i], INVALID);
 	}

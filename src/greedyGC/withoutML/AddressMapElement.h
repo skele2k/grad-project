@@ -1,6 +1,7 @@
 #pragma once
 #include "Block.h"
 #include <vector>
+#include <map>
 
 class Block;
 class AddressMapElement
@@ -17,7 +18,7 @@ public:
 	void addBlock(Block* block, int offset, int page);
 	void setNumberOfBlocks(unsigned int number);
 	unsigned int getNumberOfBlocks();
-	std::vector<int> markInvalid();
+	std::map<int, int> markInvalid();
 	void unlinkBlock(Block* block);
 	void clear();
 

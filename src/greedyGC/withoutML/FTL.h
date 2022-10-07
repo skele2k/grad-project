@@ -15,8 +15,8 @@ private:
 	const int BLOCKSIZE;
 	const int PAGESIZE;
 	const int NUMBEROFPAGES;
-	const int KB;
-	const int ERASELIMIT;
+	const double TRIGGERTHRESH;
+	const double GCTHRESH;
 	unsigned int nandWrite;
 	unsigned int requestedWrite;
 	double writeAmplification;
@@ -28,12 +28,14 @@ private:
 	void clearBlockVector(std::vector<Block*>& block);
 	bool issueIOCommand(Sector& sector);
 	void markOverlapped(std::map<unsigned int, AddressMapElement*>::iterator found);
-	void relocateFullBlockElem(std::vector<int> lastValidPages);
+	void relocateFullBlockIdx(std::map<int, int> lastValidPages);
 	bool greedyGC();
-	bool writeInDrive(int& pagesNeeded, std::map<unsigned int, AddressMapElement*>::iterator found);
+	int writeInDrive(int pagesNeeded, std::map<unsigned int, AddressMapElement*>::iterator found);
 	std::map<unsigned int, AddressMapElement*>::iterator checkSectorIdExist(std::map<unsigned int, AddressMapElement*>::iterator found, unsigned int sectorId);
+	int numberOfNotNullPt();
+
 public:
-	FTL(int numberOfSSDBlocks, int blockSize, int pageSize, int numberOfPages);
+	FTL(int numberOfSSDBlocks, int blockSize, int pageSize, int numberOfPages, double trigger, double gcThresh);
 	~FTL();
 	int getIOCommand();
 

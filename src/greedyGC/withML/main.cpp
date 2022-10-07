@@ -103,7 +103,6 @@ int main() {
                 timeElem->second = timeStamp;
             }
             memcpy(&sectorIdData[0], &sectorIdData[1], sizeof(double) * (WINDOW_SIZE - 1));
-            memcpy(&timeDeltaData[0], &timeDeltaData[1], sizeof(float) * (WINDOW_SIZE - 1));
             memcpy(&timeDiffData[0], &timeDiffData[1], sizeof(float) * (WINDOW_SIZE - 1));
             sectorIdData[WINDOW_SIZE - 1] = sector.GetId();
             timeDiffData[WINDOW_SIZE - 1] = timeDiff;
